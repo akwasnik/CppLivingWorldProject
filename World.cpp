@@ -1,6 +1,7 @@
 #include "World.h"
 #include <fstream>
 #include <algorithm>
+#include <iostream>
 
 string World::getOrganismFromPosition(int x, int y)
 {	
@@ -131,7 +132,7 @@ void World::readWorld(string fileName)
 		this->turn = (int)result;
 		my_file.read((char*)&result, sizeof(int));
 		int orgs_size = (int)result;
-		vector<Organism> new_organisms;
+		vector<Organism> new_organisms; // czemu nie mozemy skorzystac z this.organisms i ich wyczyscic?
 		for (int i = 0; i < orgs_size; i++) {
 			int power;
 			my_file.read((char*)&result, sizeof(int));

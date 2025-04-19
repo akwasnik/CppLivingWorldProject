@@ -23,6 +23,6 @@ public:
 
 	string toString();
 
-	virtual void move(int dx, int dy);
+	virtual void move(int dx, int dy); // wirtualna bo bedzie dziedziczone i nadpisywane rozne zwierzeta roznie sie beda poruszac!
 
 };
