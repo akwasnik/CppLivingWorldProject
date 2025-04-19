@@ -20,5 +20,5 @@ class Position {
 		string toString();
 
 		double distance(Position position);
-		void move(int dx, int dy); // nie jest wirtualna, bo nie bedzie dziedziczone
+		void move(int dx, int dy); // not virtual, wont be inherited
 };

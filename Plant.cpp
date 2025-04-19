@@ -10,7 +10,7 @@ Plant::Plant() : Organism()
 	setSpecies("P");
 }
 
-void Plant::move(int dx, int dy) // nie brakuje tutaj przupadkiem "override"?
+void Plant::move(int dx, int dy) // isnt "override" missing here? would be useful for compiler
 {
 	Organism::move(0, 0);
 }

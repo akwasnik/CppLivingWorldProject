@@ -132,7 +132,7 @@ void World::readWorld(string fileName)
 		this->turn = (int)result;
 		my_file.read((char*)&result, sizeof(int));
 		int orgs_size = (int)result;
-		vector<Organism> new_organisms; // czemu nie mozemy skorzystac z this.organisms i ich wyczyscic?
+		vector<Organism> new_organisms; //why cant we use this->organisms ?
 		for (int i = 0; i < orgs_size; i++) {
 			int power;
 			my_file.read((char*)&result, sizeof(int));
