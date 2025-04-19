@@ -3,6 +3,12 @@
 #include <algorithm>
 #include <iostream>
 
+const int World::directions[8][2] = { // cool looking, and just a tiny performence booost
+	{-1, -1}, {-1, 0}, {-1, 1},
+	{ 0, -1},          { 0, 1},
+	{ 1, -1}, { 1, 0}, { 1, 1}
+};
+
 string World::getOrganismFromPosition(int x, int y)
 {	
 	for (Organism org : organisms)
@@ -11,9 +17,9 @@ string World::getOrganismFromPosition(int x, int y)
 	return "";
 }
 
-bool World::isPositionOnWorld(int x, int y)
+bool World::isPositionOnWorld(Position position)
 {
-	return (x >= 0 && y >= 0 && x < getWorldX() && y < getWorldY());
+	return (position.getX() >= 0 && position.getY() >= 0 && position.getX() < getWorldX() && position.getY() < getWorldY());
 }
 
 bool World::isPositionFree(Position position) {
@@ -21,20 +27,17 @@ bool World::isPositionFree(Position position) {
 }
 
 vector<Position> World::getVectorOfFreePositionsAround(Position position)
-{	
-	int pos_x = position.getX(), pos_y = position.getY();
-	vector<Position> result;
-	for(int x = -1; x < 2; ++x)
-		for (int y = -1; y < 2; ++y)
-			if ((x != 0 || y != 0) && 
-				isPositionOnWorld(pos_x + x, pos_y + y)) {
-				result.push_back(Position(pos_x + x, pos_y + y));
-			}
-	auto iter = remove_if(result.begin(), result.end(),
-		[this](Position pos) {return !isPositionFree(pos); });
-	result.erase(iter, result.end());
+{
+    vector<Position> result;
 
-	return result;
+	for (auto [dx, dy] : directions) {
+		Position newPos = {position.getX() + dx, position.getY() + dy };
+		if( isPositionFree(newPos) && isPositionOnWorld(newPos)){
+			result.push_back(newPos);
+		}
+	}
+
+    return result;
 }
 
 World::World(int worldX, int worldY)
@@ -132,7 +135,7 @@ void World::readWorld(string fileName)
 		this->turn = (int)result;
 		my_file.read((char*)&result, sizeof(int));
 		int orgs_size = (int)result;
-		vector<Organism> new_organisms; //why cant we use this->organisms ?
+		vector<Organism> new_organisms; //why cant we use this->organisms
 		for (int i = 0; i < orgs_size; i++) {
 			int power;
 			my_file.read((char*)&result, sizeof(int));
@@ -154,8 +157,7 @@ void World::readWorld(string fileName)
 			species.resize(s_size);
 			my_file.read((char*)&species[0], s_size);
 			
-			Organism org(power, pos);
-			org.setSpecies(species);
+			Organism org(power, pos, species);
 			new_organisms.push_back(org);
 		}
 		this->organisms = new_organisms;

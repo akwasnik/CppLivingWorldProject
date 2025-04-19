@@ -16,8 +16,10 @@ private:
 	char separator = '.';
 
 	string getOrganismFromPosition(int x, int y);
-	bool isPositionOnWorld(int x, int y);
+	bool isPositionOnWorld(Position position);
 	bool isPositionFree(Position position);
+
+	static const int directions[8][2];
 
 public:
 	World(int worldX, int worldY);
