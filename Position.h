@@ -10,7 +10,6 @@ class Position {
 
 	public:
 		Position(int x, int y);
-		Position() : x(0), y(0) {}
 
 		int getX();
 		void setX(int x);

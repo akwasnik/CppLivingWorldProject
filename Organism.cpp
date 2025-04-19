@@ -1,11 +1,8 @@
 #include "Organism.h"
+#include <iostream>
 
-Organism::Organism(int power, Position position)
-{
-	setPower(power);
-	setPosition(position);
-	setSpecies("O");
-}
+Organism::Organism(int power, Position position, string species): power(power), position(position), species(species){}
+
 
 int Organism::getPower()
 {

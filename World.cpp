@@ -132,7 +132,7 @@ void World::readWorld(string fileName)
 		this->turn = (int)result;
 		my_file.read((char*)&result, sizeof(int));
 		int orgs_size = (int)result;
-		vector<Organism> new_organisms; //why cant we use this->organisms ?
+		vector<Organism> new_organisms; //why cant we use this->organisms
 		for (int i = 0; i < orgs_size; i++) {
 			int power;
 			my_file.read((char*)&result, sizeof(int));
@@ -154,8 +154,7 @@ void World::readWorld(string fileName)
 			species.resize(s_size);
 			my_file.read((char*)&species[0], s_size);
 			
-			Organism org(power, pos);
-			org.setSpecies(species);
+			Organism org(power, pos, species);
 			new_organisms.push_back(org);
 		}
 		this->organisms = new_organisms;

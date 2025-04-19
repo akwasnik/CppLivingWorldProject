@@ -11,8 +11,7 @@ private:
 	Position position;
 	string species;
 public:
-	Organism(int power, Position position);
-	Organism() : power(0), position(0, 0), species("O") {};
+	Organism(int power, Position position, string species);
 
 	int getPower();
 	void setPower(int power);

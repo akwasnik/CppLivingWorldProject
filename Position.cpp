@@ -1,7 +1,7 @@
 #include "Position.h"
 #include <cmath>
 
-Position::Position(int x, int y)
+Position::Position(int x, int y) //if not RELU we would be able to get rid of setters
 {
 	setX(x);
 	setY(y);
