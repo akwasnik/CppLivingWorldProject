@@ -71,7 +71,7 @@ int World::getTurn()
 	return this->turn;
 }
 
-void World::addOrganism(Organism* organism)
+void World::addOrganism(Organism* organism) // pointer -- and we still havent implemented destructor
 {
 	this->organisms.push_back(*organism);
 }
@@ -83,15 +83,18 @@ void World::makeTurn()
 	int randomIndex;
 
 	srand(time(0));
-	for (auto& org : organisms) {
+	for (Organism& org : organisms) {
 		newPositions = getVectorOfFreePositionsAround(org.getPosition());
 		numberOfNewPositions = newPositions.size();
 		if (numberOfNewPositions > 0) {
 			randomIndex = rand() % numberOfNewPositions;
 			org.setPosition(newPositions[randomIndex]);
+			// newPositions[randomIndex]
+			// Organism newOrg = Organism(org.getPower(),newPositions[randomIndex],org.getSpecies());
+			// org = newOrg;
 		}
 	}
-	turn++;
+	++turn;
 }
 
 void World::writeWorld(string fileName)

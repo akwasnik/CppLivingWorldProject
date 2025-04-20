@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include "Position.h"
 
 using namespace std;
@@ -10,8 +11,15 @@ private:
 	int power;
 	Position position;
 	string species;
+
+	Organism* historyOfAncestors;
+	int genNumber;
+
 public:
+	// Organism(): power(0), position({0,0}), species("O"){};
 	Organism(int power, Position position, string species);
+	Organism(const Organism& other);
+	~Organism();
 
 	int getPower();
 	void setPower(int power);
@@ -19,6 +27,9 @@ public:
 	void setPosition(Position position);
 	string getSpecies();
 	void setSpecies(string spec);
+	Organism* getHistory();
+	void incrGenNumber();
+	int getGenNumber();
 
 	string toString();
 
