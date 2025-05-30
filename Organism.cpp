@@ -1,47 +1,25 @@
-#include "Organism.h"
-#include <iostream>
+#include "Organism.h"  
+#include <iostream>  
 
-Organism::Organism(int power, Position position, string species): power(power), position(position), species(species){}
+Organism::Organism(int power, Position position, string species) : power(power), position(position), species(species) {}  
 
+int Organism::getPower()               { return power; }  
+void Organism::setPower(int p)         { power = p; }  
 
-int Organism::getPower()
-{
-	return this->power;
-}
+Position Organism::getPosition()       { return position; }  
+void Organism::setPosition(Position p) { position = p; }  
 
-void Organism::setPower(int power)
-{
-	this->power = power;
-}
+string Organism::getSpecies()          { return species; }  
+void Organism::setSpecies(string s)    { species = s; }  
 
-Position Organism::getPosition()
-{
-	return this->position;
-}
-
-void Organism::setPosition(Position position)
-{
-	this->position = position;
-}
-
-string Organism::toString()
-{
+string Organism::toString(){
 	return "{ species: " + this->getSpecies() + 
 		", power: " + to_string(getPower()) + 
 		", position: " + getPosition().toString() + "}";
-}
+}  
 
-void Organism::move(int dx, int dy)
-{
-	position.move(dx, dy);
-}
-
-string Organism::getSpecies()
-{
-	return this->species;
-}
-
-void Organism::setSpecies(string spec)
-{
-	this->species = spec;
-}
+// definicja czysto-wirtualnej metody, dostępna dla pochodnych  
+void Organism::move(int dx, int dy)  
+{  
+    position.move(dx, dy);  
+}  
