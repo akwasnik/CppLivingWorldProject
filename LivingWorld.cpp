@@ -4,39 +4,33 @@
 #include "Plant.h"
 #include "Animal.h"
 #include "World.h"
+#include "Organisms/Sheep.h"
 
 using namespace std;
 
 int main()
 {
-	Position abc{1,3};
-	World world;
-	Plant p1{ 3, { 4, 5 } };
-	Plant p2{ 3, { 5, 4 } };
+	World world{8,6};
 
-	Animal a1{ 6, {3,2} };
-	Animal a2{ 6, {2,3} };
-
-	world.addOrganism(&p1);
-	world.addOrganism(&p2);
-	world.addOrganism(&a1);
-	world.addOrganism(&a2);
-
-	auto positions = world.getVectorOfFreePositionsAround({5,5});
-
-	for(auto pos: positions)
-		cout << pos.toString() << endl;
+	Sheep* baranekShoun = new Sheep({3,1});
 
 	// Tura 0
 	cout << world.toString() << endl;
-
+	world.addOrganism(baranekShoun);
+	cout<<world.toString()<<endl;
+	cout<<baranekShoun->toString()<<endl;
+	cout<<baranekShoun->getLastPosition().toString()<<endl;
 	// Tura 1
 	world.makeTurn();
 	cout << world.toString() << endl;
+	cout<<baranekShoun->toString()<<endl;
+	cout<<baranekShoun->getLastPosition().toString()<<endl;
 
 	// Tura 2
 	world.makeTurn();
 	cout << world.toString() << endl;
+	cout<<baranekShoun->toString()<<endl;
+	cout<<baranekShoun->getLastPosition().toString()<<endl;
 
 	world.writeWorld("world.bin");
 

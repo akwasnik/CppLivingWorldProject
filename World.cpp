@@ -1,3 +1,4 @@
+#include "Organisms/Sheep.h"
 #include "World.h"
 #include <fstream>
 #include <algorithm>
@@ -156,9 +157,16 @@ void World::readWorld(string fileName)
 			string species;
 			species.resize(s_size);
 			my_file.read((char*)&species[0], s_size);
-			
-			Organism org(power, pos, species);
-			new_organisms.push_back(org);
+
+			Organism* org = nullptr;
+			if (species == "S") {
+				org = new Sheep(pos);
+				org->setPower(power);
+			}
+			if (org != nullptr) {
+				new_organisms.push_back(*org);
+				delete org;
+			}
 		}
 		this->organisms = new_organisms;
 		my_file.close();

@@ -24,5 +24,5 @@ public:
 
     string toString();  
 
-    virtual void move(int dx, int dy) = 0;  
+    virtual void move(int dx, int dy);  
 };  
