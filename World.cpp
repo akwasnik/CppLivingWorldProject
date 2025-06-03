@@ -12,9 +12,9 @@ const int World::directions[8][2] = { // cool looking, and just a tiny performen
 
 string World::getOrganismFromPosition(int x, int y)
 {	
-	for (Organism org : organisms)
-		if (org.getPosition().getX() == x && org.getPosition().getY() == y)
-			return org.getSpecies();
+	for (Organism* org : organisms)
+		if (org->getPosition().getX() == x && org->getPosition().getY() == y)
+			return org->getSpecies();
 	return "";
 }
 
@@ -27,16 +27,20 @@ bool World::isPositionFree(Position position) {
 	return this->getOrganismFromPosition(position.getX(), position.getY()).empty();
 }
 
-vector<Position> World::getVectorOfFreePositionsAround(Position position)
+vector<pair<int,int>> World::getVectorOfFreeDirections(Position position)
 {
-    vector<Position> result;
+    vector<pair<int,int>> result;
+    result.reserve(8); // 
 
-	for (auto [dx, dy] : directions) {
-		Position newPos = {position.getX() + dx, position.getY() + dy };
-		if( isPositionFree(newPos) && isPositionOnWorld(newPos)){
-			result.push_back(newPos);
-		}
-	}
+    for (const auto& dir : directions) {
+        int dx = dir[0];
+        int dy = dir[1];
+
+        Position newPos{ position.getX() + dx, position.getY() + dy };
+        if (isPositionOnWorld(newPos) && isPositionFree(newPos)) {
+            result.emplace_back(dx, dy);
+        }
+    }
 
     return result;
 }
@@ -74,22 +78,24 @@ int World::getTurn()
 
 void World::addOrganism(Organism* organism)
 {
-	this->organisms.push_back(*organism);
+	this->organisms.push_back(organism);
 }
 
 void World::makeTurn()
 {
-	vector<Position> newPositions;
-	int numberOfNewPositions;
+	vector<pair<int,int>> freeDirs;
+	int numberOfFreeDirs;
 	int randomIndex;
 
 	srand(time(0));
-	for (auto& org : organisms) {
-		newPositions = getVectorOfFreePositionsAround(org.getPosition());
-		numberOfNewPositions = newPositions.size();
-		if (numberOfNewPositions > 0) {
-			randomIndex = rand() % numberOfNewPositions;
-			org.setPosition(newPositions[randomIndex]);
+	for (Organism* org : organisms) {
+		freeDirs = getVectorOfFreeDirections(org->getPosition());
+		numberOfFreeDirs = freeDirs.size();
+		if (numberOfFreeDirs > 0) {
+			randomIndex = rand() % numberOfFreeDirs;
+			int dx = freeDirs[randomIndex].first;
+        	int dy = freeDirs[randomIndex].second;
+			org->move(dx,dy);
 		}
 	}
 	turn++;
@@ -107,13 +113,13 @@ void World::writeWorld(string fileName)
 		my_file.write((char*)&orgs_size, sizeof(int));
 		for (int i = 0; i < orgs_size; i++) {
 			int data;
-			data = this->organisms[i].getPower();
+			data = this->organisms[i]->getPower();
 			my_file.write((char*)&data, sizeof(int));
-			data = this->organisms[i].getPosition().getX();
+			data = this->organisms[i]->getPosition().getX();
 			my_file.write((char*)&data, sizeof(int));
-			data = this->organisms[i].getPosition().getY();
+			data = this->organisms[i]->getPosition().getY();
 			my_file.write((char*)&data, sizeof(int));
-			string s_data = this->organisms[i].getSpecies();
+			string s_data = this->organisms[i]->getSpecies();
 			int s_size = s_data.size();
 			my_file.write((char*)&s_size, sizeof(int));
 			my_file.write(s_data.data(), s_data.size());
@@ -136,7 +142,7 @@ void World::readWorld(string fileName)
 		this->turn = (int)result;
 		my_file.read((char*)&result, sizeof(int));
 		int orgs_size = (int)result;
-		vector<Organism> new_organisms; //why cant we use this->organisms
+		vector<Organism *> new_organisms; //why cant we use this->organisms
 		for (int i = 0; i < orgs_size; i++) {
 			int power;
 			my_file.read((char*)&result, sizeof(int));
@@ -164,7 +170,7 @@ void World::readWorld(string fileName)
 				org->setPower(power);
 			}
 			if (org != nullptr) {
-				new_organisms.push_back(*org);
+				new_organisms.push_back(org);
 				delete org;
 			}
 		}
