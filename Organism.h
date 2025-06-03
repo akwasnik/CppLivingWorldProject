@@ -13,7 +13,7 @@ private:
     string species;  
 public:  
     Organism(int power, Position position, string species);  
-    virtual ~Organism() = default;        // wirtualny destruktor  
+    virtual ~Organism() = 0;        // wirtualny destruktor  
 
     int getPower();  
     void setPower(int power);  
