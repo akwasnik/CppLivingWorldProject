@@ -1,7 +1,7 @@
 #include "Plant.h"  
 #include <iostream>  
 
-Plant::Plant(int power, Position position, int lifeSpan) : Organism(power, position, "P", 10) {}  
+Plant::Plant(int power, Position position, int lifeSpan) : Organism(power, position, "P", 10, 0) {}  
 
 Plant::~Plant() = default;
 

@@ -100,15 +100,20 @@ int World::getTurn()
 
 void World::addOrganism(Organism* organism)
 {
+	organism->setBirthTurn(this->getTurn());
 	this->organisms.push_back(organism);
 }
 
 void World::removeOrganism(Organism* organism)
 {
-	auto it = remove(organisms.begin(), organisms.end(), organism);
-	if (it != organisms.end()) {
-		organisms.erase(it);
-	}
+    Organism* kid = organism->getChild();
+    if (kid != nullptr) {
+        kid->updateAncestorDeath(this->getTurn());
+    }
+    auto it = std::remove(organisms.begin(), organisms.end(), organism);
+    if (it != organisms.end()) {
+        organisms.erase(it);
+    }
 }
 
 void World::makeTurn()
@@ -191,6 +196,10 @@ void World::makeTurn()
                 int idx = rand() % static_cast<int>(dirs.size()); //is type size_t, but has no % for size_t, hence static_cast<int>
                 Position childPos{ pos.getX() + dirs[idx].first, pos.getY() + dirs[idx].second };
                 Sheep* baby = new Sheep(childPos);
+				baby->setBirthTurn(this->getTurn());
+				baby->setAncestorsHistory(org->getAncestorsHistory());
+				baby->addAncestor(org->getBirthTurn());
+				org->setChild(baby);
                 newborns.push_back(baby);
             }
         }
@@ -200,6 +209,10 @@ void World::makeTurn()
                 int idx = rand() % static_cast<int>(dirs.size());
                 Position childPos{ pos.getX() + dirs[idx].first, pos.getY() + dirs[idx].second };
                 Wolf* pup = new Wolf(childPos);
+                pup->setBirthTurn(this->getTurn());
+				pup->setAncestorsHistory(org->getAncestorsHistory());
+				pup->addAncestor(org->getBirthTurn());
+				org->setChild(pup);
                 newborns.push_back(pup);
             }
         }
@@ -209,6 +222,10 @@ void World::makeTurn()
                 int idx = rand() % static_cast<int>(dirs.size());
                 Position childPos{ pos.getX() + dirs[idx].first, pos.getY() + dirs[idx].second };
                 Grass* baby = new Grass(childPos);
+                baby->setBirthTurn(this->getTurn());
+				baby->setAncestorsHistory(org->getAncestorsHistory());
+				baby->addAncestor(org->getBirthTurn());
+				org->setChild(baby);
                 newborns.push_back(baby);
             }
         }
@@ -218,6 +235,10 @@ void World::makeTurn()
                 int idx = rand() % static_cast<int>(dirs.size());
                 Position childPos{ pos.getX() + dirs[idx].first, pos.getY() + dirs[idx].second };
                 Dandelion* seed = new Dandelion(childPos);
+				seed->setBirthTurn(this->getTurn());
+				seed->setAncestorsHistory(org->getAncestorsHistory());
+				seed->addAncestor(org->getBirthTurn());
+				org->setChild(seed);
                 newborns.push_back(seed);
             }
         }
@@ -227,6 +248,10 @@ void World::makeTurn()
                 int idx = rand() % static_cast<int>(dirs.size());
                 Position childPos{ pos.getX() + dirs[idx].first, pos.getY() + dirs[idx].second };
                 Toadstool* baby = new Toadstool(childPos);
+                baby->setBirthTurn(this->getTurn());
+				baby->setAncestorsHistory(org->getAncestorsHistory());
+				baby->addAncestor(org->getBirthTurn());
+				org->setChild(baby);
                 newborns.push_back(baby);
             }
         }
@@ -264,6 +289,18 @@ void World::writeWorld(string fileName)
 			int s_size = s_data.size();
 			my_file.write((char*)&s_size, sizeof(int));
 			my_file.write(s_data.data(), s_data.size());
+			data = this->organisms[i]->getBirthTurn();
+    		my_file.write((char*)&data, sizeof(int));
+			const auto &hist = this->organisms[i]->getAncestorsHistory();
+			int histSize = static_cast<int>(hist.size());
+			my_file.write((char*)&histSize, sizeof(int));
+			for (const auto &entry : hist) {
+				int birthT = entry.first;
+				int deathT = entry.second;
+				my_file.write((char*)&birthT, sizeof(int));
+				my_file.write((char*)&deathT, sizeof(int));
+			}
+
 		}
 		my_file.close();
 	}
@@ -309,40 +346,48 @@ void World::readWorld(string fileName)
 			species.resize(s_size);
 			my_file.read(&species[0], s_size);
 
+			int birthT;
+            my_file.read((char*)&birthT, sizeof(int));
+
 			Organism* org = nullptr;
+
+			my_file.read((char*)&result, sizeof(int));
+            int histSize = result;
+            for (int j = 0; j < histSize; j++) {
+                int ancestorBirth, ancestorDeath;
+                my_file.read((char*)&ancestorBirth, sizeof(int));
+                my_file.read((char*)&ancestorDeath, sizeof(int));
+                org->addAncestor(ancestorBirth);
+                org->updateAncestorDeath(ancestorDeath);
+            }
 
 			if (species == "S") {
 				org = new Sheep(pos);
-				org->setPower(power);
-				org->setLifeSpan(lifeSpan);
 			}
 			else if (species == "W")
 			{
 				org = new Wolf(pos);
-				org->setPower(power);
-				org->setLifeSpan(lifeSpan);
 			}else if (species == "D")
 			{
 				org = new Dandelion(pos);
-				org->setPower(power);
-				org->setLifeSpan(lifeSpan);
 			}
 			else if (species == "G")
 			{
 				org = new Grass(pos);
-				org->setPower(power);
-				org->setLifeSpan(lifeSpan);
 			}
 			else if (species == "T")
 			{
 				org = new Toadstool(pos);
-				org->setPower(power);
-				org->setLifeSpan(lifeSpan);
 			}
 			else {
 				cerr << "Unknown species: " << species << endl;
 			}
 			
+			org->setPower(power);
+			org->setLifeSpan(lifeSpan);
+			org->setSpecies(species);
+			org->setBirthTurn(birthT);
+			org->setPosition(pos);
 			
 			if (org != nullptr) {
 				new_organisms.push_back(org);
@@ -369,4 +414,19 @@ string World::toString()
 		result += "\n";
 	}
 	return result;
+}
+
+void World::viewAncestorsHistoryOfAllOrganisms()
+{
+	for (Organism* org : organisms) {
+		
+		auto history = org->getAncestorsHistory();
+		if (!history.empty()) {
+			cout << "Ancestors history of "<<org->getSpecies()<<" at position (" << org->getPosition().getX() << ", " << org->getPosition().getY() << "):\n";
+			for (const auto& entry : history) {
+				cout << "Birth Turn: " << entry.first << ", Death Turn: " << entry.second << endl;
+			}
+		}
+		cout << endl;
+	}
 }

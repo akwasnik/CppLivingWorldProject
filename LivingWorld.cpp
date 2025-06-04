@@ -33,22 +33,19 @@ int main()
 
 	cout << "World State after one turn:\n" << world.toString() << endl;
 
-	world.writeWorld("world_state.bin");
+	// world.writeWorld("world_state.bin");
 
-	world.makeTurn();
+	// world.makeTurn();
 
-	cout << "World State after second turn:\n" << world.toString() << endl;
+	// cout << "World State after second turn:\n" << world.toString() << endl;
 
-	world.makeTurn();
+	// world.makeTurn();
 
-	cout << "World State after third turn:\n" << world.toString() << endl;
+	// cout << "World State after third turn:\n" << world.toString() << endl;
 
-	world.readWorld("world_state.bin");
+	// world.readWorld("world_state.bin");
 
-	cout << "World State after loading from file (first turn):\n" << world.toString() << endl;
-
-	world.makeTurn();
-	cout << world.toString() << endl;
+	// cout << "World State after loading from file (first turn):\n" << world.toString() << endl;
 
 	world.makeTurn();
 	cout << world.toString() << endl;
@@ -98,6 +95,10 @@ int main()
 	world.makeTurn();
 	cout << world.toString() << endl;
 
+	world.makeTurn();
+	cout << world.toString() << endl;
+
+	world.viewAncestorsHistoryOfAllOrganisms();
 
 	return 0;
 }

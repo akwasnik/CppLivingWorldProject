@@ -40,6 +40,8 @@ public:
 
 	void writeWorld(string fileName);
 	void readWorld(string fileName);
+
+	void viewAncestorsHistoryOfAllOrganisms();
 	
 	string toString();
 
