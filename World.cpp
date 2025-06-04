@@ -133,7 +133,7 @@ void World::makeTurn()
 		if (org->getLifeSpan() <= 0) {
 			removeOrganism(org);
 			Position pos = org->getPosition();
-			cout << "An organism at position (" << pos.getX() << ", " << pos.getY() << ") has died of old age." << endl;
+			cout << "An organism "<<org->getSpecies()<<" at position (" << pos.getX() << ", " << pos.getY() << ") has died of old age." << endl;
 			continue;
 		}
 
@@ -267,135 +267,95 @@ void World::makeTurn()
 
 void World::writeWorld(string fileName)
 {
-	fstream my_file;
-	my_file.open(fileName, ios::out | ios::binary);
-	if (my_file.is_open()) {
-		my_file.write((char*)&this->worldX, sizeof(int));
-		my_file.write((char*)&this->worldY, sizeof(int));
-		my_file.write((char*)&this->turn, sizeof(int));
-		int orgs_size = this->organisms.size();
-		my_file.write((char*)&orgs_size, sizeof(int));
-		for (int i = 0; i < orgs_size; i++) {
-			int data;
-			data = this->organisms[i]->getPower();
-			my_file.write((char*)&data, sizeof(int));
-			data = this->organisms[i]->getPosition().getX();
-			my_file.write((char*)&data, sizeof(int));
-			data = this->organisms[i]->getPosition().getY();
-			my_file.write((char*)&data, sizeof(int));
-			data = this->organisms[i]->getLifeSpan();
-			my_file.write((char*)&data, sizeof(int));
-			string s_data = this->organisms[i]->getSpecies();
-			int s_size = s_data.size();
-			my_file.write((char*)&s_size, sizeof(int));
-			my_file.write(s_data.data(), s_data.size());
-			data = this->organisms[i]->getBirthTurn();
-    		my_file.write((char*)&data, sizeof(int));
-			const auto &hist = this->organisms[i]->getAncestorsHistory();
-			int histSize = static_cast<int>(hist.size());
-			my_file.write((char*)&histSize, sizeof(int));
-			for (const auto &entry : hist) {
-				int birthT = entry.first;
-				int deathT = entry.second;
-				my_file.write((char*)&birthT, sizeof(int));
-				my_file.write((char*)&deathT, sizeof(int));
-			}
+    cout<< "Saving world to file: " << fileName << endl;
+    ofstream out(fileName, ios::binary);
+    if (!out) {
+        throw runtime_error("Cannot open file for writing: " + fileName);
+    }
+    out.write(reinterpret_cast<const char*>(&worldX), sizeof(int));
+    out.write(reinterpret_cast<const char*>(&worldY), sizeof(int));
+    out.write(reinterpret_cast<const char*>(&turn), sizeof(int));
 
-		}
-		my_file.close();
-	}
+    int orgCount = static_cast<int>(organisms.size());
+    out.write(reinterpret_cast<const char*>(&orgCount), sizeof(int));
+
+    for (auto* org : organisms) {
+        if (org->getSpecies() == "W") {
+            static_cast<Wolf*>(org)->serialize(out);
+        }
+        else if (org->getSpecies() == "S") {
+            static_cast<Sheep*>(org)->serialize(out);
+        }
+        else if (org->getSpecies() == "G") {
+            static_cast<Grass*>(org)->serialize(out);
+        }
+        else if (org->getSpecies() == "D") {
+            static_cast<Dandelion*>(org)->serialize(out);
+        }
+        else if (org->getSpecies() == "T") {
+            static_cast<Toadstool*>(org)->serialize(out);
+        }
+        else {
+            throw runtime_error("Unknown organism species: " + org->getSpecies());
+        }
+    }
+
+    out.close();
 }
 
 void World::readWorld(string fileName)
 {
-	fstream my_file;
-	my_file.open(fileName, ios::in | ios::binary);
-	if (my_file.is_open()) {
-		int result;
-		my_file.read((char*)&result, sizeof(int));
-		this->worldX = (int)result;
-		my_file.read((char*)&result, sizeof(int));
-		this->worldY = (int)result;
-		my_file.read((char*)&result, sizeof(int));
-		this->turn = (int)result;
-		my_file.read((char*)&result, sizeof(int));
-		int orgs_size = (int)result;
-		vector<Organism *> new_organisms; //why cant we use this->organisms
-		for (int i = 0; i < orgs_size; i++) {
-			int power;
-			my_file.read((char*)&result, sizeof(int));
-			power = (int)result;
+    cout << "Loading world from file: " << fileName << endl;
+    ifstream in(fileName, ios::binary);
+    if (!in) {
+        throw runtime_error("Cannot open file for reading: " + fileName);
+    }
+    int x, y, t;
+    in.read(reinterpret_cast<char*>(&x), sizeof(int));
+    in.read(reinterpret_cast<char*>(&y), sizeof(int));
+    in.read(reinterpret_cast<char*>(&t), sizeof(int));
+    worldX = x; worldY = y; turn = t;
 
-			int pos_x;
-			my_file.read((char*)&result, sizeof(int));
-			pos_x = (int)result;
-			int pos_y;
-			my_file.read((char*)&result, sizeof(int));
-			pos_y = (int)result;
-			Position pos{ pos_x, pos_y };
+    int orgCount;
+    in.read(reinterpret_cast<char*>(&orgCount), sizeof(int));
 
-			int lifeSpan;
-			my_file.read((char*)&result, sizeof(int));
-			lifeSpan = (int)result;
-			
-			int s_size;
-			my_file.read((char*)&result, sizeof(int));
-			s_size = (int)result;
+    for (auto* o : organisms) {
+        delete o;
+    }
+    organisms.clear();
 
-			string species;
-			species.resize(s_size);
-			my_file.read(&species[0], s_size);
+    for (int i = 0; i < orgCount; ++i) {
+        int speciesLen;
+        in.read(reinterpret_cast<char*>(&speciesLen), sizeof(int));
+        string species(speciesLen, ' ');
+        in.read(&species[0], speciesLen);
 
-			int birthT;
-            my_file.read((char*)&birthT, sizeof(int));
+        Organism* org = nullptr;
+        if (species == "W") {
+            org = Wolf::deserialize_impl(in);
+        }
+        else if (species == "S") {
+            org = Sheep::deserialize_impl(in);
+        }
+        else if (species == "G") {
+            org = Grass::deserialize_impl(in);
+        }
+        else if (species == "D") {
+            org = Dandelion::deserialize_impl(in);
+        }
+        else if (species == "T") {
+            org = Toadstool::deserialize_impl(in);
+        }
+        else {
+            throw runtime_error("Unknown organism species: " + species);
+        }
+        
+        if (org) {
+            organisms.push_back(org);
+        }
+    }
 
-			Organism* org = nullptr;
-
-			my_file.read((char*)&result, sizeof(int));
-            int histSize = result;
-            for (int j = 0; j < histSize; j++) {
-                int ancestorBirth, ancestorDeath;
-                my_file.read((char*)&ancestorBirth, sizeof(int));
-                my_file.read((char*)&ancestorDeath, sizeof(int));
-                org->addAncestor(ancestorBirth);
-                org->updateAncestorDeath(ancestorDeath);
-            }
-
-			if (species == "S") {
-				org = new Sheep(pos);
-			}
-			else if (species == "W")
-			{
-				org = new Wolf(pos);
-			}else if (species == "D")
-			{
-				org = new Dandelion(pos);
-			}
-			else if (species == "G")
-			{
-				org = new Grass(pos);
-			}
-			else if (species == "T")
-			{
-				org = new Toadstool(pos);
-			}
-			else {
-				cerr << "Unknown species: " << species << endl;
-			}
-			
-			org->setPower(power);
-			org->setLifeSpan(lifeSpan);
-			org->setSpecies(species);
-			org->setBirthTurn(birthT);
-			org->setPosition(pos);
-			
-			if (org != nullptr) {
-				new_organisms.push_back(org);
-			}
-		}
-		this->organisms = new_organisms;
-		my_file.close();
-	}
+    in.close();
 }
 
 string World::toString()

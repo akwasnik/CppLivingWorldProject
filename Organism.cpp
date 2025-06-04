@@ -61,5 +61,64 @@ void Organism::getOlder(){ setLifeSpan(getLifeSpan() - 1); }
 void Organism::move(int dx, int dy)  
 {  
     position.move(dx, dy);  
-}  
+}
 
+
+void Organism::serializeBase(std::ostream& out) {
+    int data;
+
+    data = power;
+    out.write(reinterpret_cast<const char*>(&data), sizeof(int));
+
+    data = position.getX();
+    out.write(reinterpret_cast<const char*>(&data), sizeof(int));
+    data = position.getY();
+    out.write(reinterpret_cast<const char*>(&data), sizeof(int));
+
+    data = lifeSpan;
+    out.write(reinterpret_cast<const char*>(&data), sizeof(int));
+    data = birthTurn;
+    out.write(reinterpret_cast<const char*>(&data), sizeof(int));
+
+    int histSize = static_cast<int>(ancestorsHistory.size());
+    out.write(reinterpret_cast<const char*>(&histSize), sizeof(int));
+    for (const auto& pr : ancestorsHistory) {
+        int b = pr.first;
+        int d = pr.second;
+        out.write(reinterpret_cast<const char*>(&b), sizeof(int));
+        out.write(reinterpret_cast<const char*>(&d), sizeof(int));
+    }
+}
+
+void Organism::deserializeBase(std::istream& in,
+                                     int& out_power,
+                                     int& out_posx,
+                                     int& out_posy,
+                                     int& out_lifeSpan,
+                                     int& out_birthTurn,
+                                     vector<pair<int,int>>& out_hist) 
+{
+    // 1) power
+    in.read(reinterpret_cast<char*>(&out_power), sizeof(int));
+
+    // 2) position
+    in.read(reinterpret_cast<char*>(&out_posx), sizeof(int));
+    in.read(reinterpret_cast<char*>(&out_posy), sizeof(int));
+
+    // 3) lifeSpan
+    in.read(reinterpret_cast<char*>(&out_lifeSpan), sizeof(int));
+
+    // 4) birthTurn
+    in.read(reinterpret_cast<char*>(&out_birthTurn), sizeof(int));
+
+    // 5) histSize + pairs (birth, death)
+    int histSize;
+    in.read(reinterpret_cast<char*>(&histSize), sizeof(int));
+    out_hist.clear();
+    for (int i = 0; i < histSize; ++i) {
+        int b, d;
+        in.read(reinterpret_cast<char*>(&b), sizeof(int));
+        in.read(reinterpret_cast<char*>(&d), sizeof(int));
+        out_hist.emplace_back(b, d);
+    }
+}

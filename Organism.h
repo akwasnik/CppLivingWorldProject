@@ -4,6 +4,7 @@
 #include "Position.h"
 #include <vector>
 #include <utility>
+#include <iostream>
 
 using namespace std;  
 
@@ -16,7 +17,7 @@ private:
     int lifeSpan;
     int birthTurn;
     vector<pair<int,int>> ancestorsHistory;
-    Organism* child;
+    Organism* child = nullptr;
 
 public:  
     Organism(int power, Position position, string species, int lifeSpan, int birthTurn);  
@@ -51,5 +52,16 @@ public:
 
     string toString();  
 
-    virtual void move(int dx, int dy);  
+    virtual void move(int dx, int dy);
+
+    virtual void serialize(std::ostream& out) = 0;
+
+    void serializeBase(std::ostream& out);
+    static void deserializeBase(std::istream& in,
+                               int& out_power,
+                               int& out_posx,
+                               int& out_posy,
+                               int& out_lifeSpan,
+                               int& out_birthTurn,
+                               vector<pair<int,int>>& out_hist);
 };  
