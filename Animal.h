@@ -7,7 +7,7 @@ private:
     Position lastPosition;
 
 public:
-    Animal(int power, Position position);
+    Animal(int power, Position position, int lifeSpan);
     virtual ~Animal() = 0;
 
     Position getLastPosition();

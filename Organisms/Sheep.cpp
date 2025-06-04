@@ -1,7 +1,7 @@
 #include "Sheep.h"
 
-Sheep::Sheep(Position position): Animal(3, position),powerToReproduce(6) {
-    setSpecies("S");         
+Sheep::Sheep(Position position): Animal(3, position, 10), powerToReproduce(6) {
+    setSpecies("S");
 }
 
 int Sheep::getPowerToReproduce() const {

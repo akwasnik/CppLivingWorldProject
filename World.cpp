@@ -1,4 +1,8 @@
+#include "Organisms/Dandelion.h"
+#include "Organisms/Grass.h"
 #include "Organisms/Sheep.h"
+#include "Organisms/Wolf.h"
+#include "Organisms/Toadstool.h"
 #include "World.h"
 #include <fstream>
 #include <algorithm>
@@ -30,7 +34,7 @@ bool World::isPositionFree(Position position) {
 vector<pair<int,int>> World::getVectorOfFreeDirections(Position position)
 {
     vector<pair<int,int>> result;
-    result.reserve(8); // 
+    result.reserve(8); // we can reserve space for 8 directions
 
     for (const auto& dir : directions) {
         int dx = dir[0];
@@ -38,6 +42,24 @@ vector<pair<int,int>> World::getVectorOfFreeDirections(Position position)
 
         Position newPos{ position.getX() + dx, position.getY() + dy };
         if (isPositionOnWorld(newPos) && isPositionFree(newPos)) {
+            result.emplace_back(dx, dy);
+        }
+    }
+
+    return result;
+}
+
+vector<pair<int,int>> World::getVectorOfPossibleDirections(Position position)
+{
+    vector<pair<int,int>> result;
+    result.reserve(8); 
+
+    for (const auto& dir : directions) {
+        int dx = dir[0];
+        int dy = dir[1];
+
+        Position newPos{ position.getX() + dx, position.getY() + dy };
+        if (isPositionOnWorld(newPos)) {
             result.emplace_back(dx, dy);
         }
     }
@@ -81,23 +103,140 @@ void World::addOrganism(Organism* organism)
 	this->organisms.push_back(organism);
 }
 
+void World::removeOrganism(Organism* organism)
+{
+	auto it = remove(organisms.begin(), organisms.end(), organism);
+	if (it != organisms.end()) {
+		organisms.erase(it);
+	}
+}
+
 void World::makeTurn()
 {
-	vector<pair<int,int>> freeDirs;
-	int numberOfFreeDirs;
-	int randomIndex;
 
 	srand(time(0));
-	for (Organism* org : organisms) {
-		freeDirs = getVectorOfFreeDirections(org->getPosition());
-		numberOfFreeDirs = freeDirs.size();
-		if (numberOfFreeDirs > 0) {
-			randomIndex = rand() % numberOfFreeDirs;
-			int dx = freeDirs[randomIndex].first;
-        	int dy = freeDirs[randomIndex].second;
+
+	vector<Organism*> newborns;
+	vector<Organism*> toDelete;
+    newborns.reserve(organisms.size());
+
+    for (Organism* org : organisms) {
+
+			// Age the organism and check if it has died
+
+		org->getOlder();
+		if (org->getLifeSpan() <= 0) {
+			removeOrganism(org);
+			Position pos = org->getPosition();
+			cout << "An organism at position (" << pos.getX() << ", " << pos.getY() << ") has died of old age." << endl;
+			continue;
+		}
+
+			// Organism movement
+		vector<pair<int,int>> possibleDirs = getVectorOfPossibleDirections(org->getPosition());
+		int numberOfPossibleDirs = possibleDirs.size();
+		if (numberOfPossibleDirs > 0) {
+			int randomIndex = rand() % numberOfPossibleDirs;
+			int dx = possibleDirs[randomIndex].first;
+        	int dy = possibleDirs[randomIndex].second;
 			org->move(dx,dy);
 		}
-	}
+
+		    // Make action
+		for (Organism* other : organisms) {
+			if (org == other) continue; // skip self
+			if (org->getPosition().getX() == other->getPosition().getX() && org->getPosition().getY() == other->getPosition().getY()) {
+				if(org->getSpecies() == "S" && other->getSpecies() == "G") {
+					org->setPower(org->getPower() + 2);
+					removeOrganism(other);
+					cout << "A sheep at position (" << org->getPosition().getX() << ", " << org->getPosition().getY() << ") has eaten grass and gained power." << endl;
+				}
+				else if (org->getSpecies() == "S" && other->getSpecies() == "T") {
+					removeOrganism(org);
+					removeOrganism(other);
+					cout << "A sheep at position (" << org->getPosition().getX() << ", " << org->getPosition().getY() << ") has died after eating a toadstool." << endl;
+				}
+				else if (org->getSpecies() == "W" && other->getSpecies() == "T") {
+					removeOrganism(org);
+					removeOrganism(other);
+					cout << "A wolf at position (" << org->getPosition().getX() << ", " << org->getPosition().getY() << ") has died after eating a toadstool." << endl;
+				}
+				else if (org->getSpecies() == "W" && other->getSpecies() == "S") {
+					org->setPower(org->getPower() + 2);
+					removeOrganism(other);
+					cout << "A wolf at position (" << org->getPosition().getX() << ", " << org->getPosition().getY() << ") has eaten a sheep and gained power." << endl;
+				}
+
+			}
+		}
+
+			// Empower plants every second turn, for them to reproduce
+		if (turn % 5 == 0){
+			Plant* p = dynamic_cast<Plant*>(org); // dynamic_cast is used to safely downcast, we are not sure of the type
+            if (p) {
+                p->setPower(p->getPower() + 1);
+            }
+		}
+
+
+			// Reproduce all organisms
+        Position pos = org->getPosition();
+        auto dirs = getVectorOfFreeDirections(pos);
+        if (dirs.empty()) continue;
+
+        string sp = org->getSpecies();
+        if (sp == "S") {
+            Sheep* s = static_cast<Sheep*>(org);
+            if (s->tryReproduce()) {
+                int idx = rand() % static_cast<int>(dirs.size()); //is type size_t, but has no % for size_t, hence static_cast<int>
+                Position childPos{ pos.getX() + dirs[idx].first, pos.getY() + dirs[idx].second };
+                Sheep* baby = new Sheep(childPos);
+                newborns.push_back(baby);
+            }
+        }
+        else if (sp == "W") {
+            Wolf* w = static_cast<Wolf*>(org);
+            if (w->tryReproduce()) {
+                int idx = rand() % static_cast<int>(dirs.size());
+                Position childPos{ pos.getX() + dirs[idx].first, pos.getY() + dirs[idx].second };
+                Wolf* pup = new Wolf(childPos);
+                newborns.push_back(pup);
+            }
+        }
+        else if (sp == "G") {
+            Grass* g = static_cast<Grass*>(org);
+            if (g->tryReproduce()) {
+                int idx = rand() % static_cast<int>(dirs.size());
+                Position childPos{ pos.getX() + dirs[idx].first, pos.getY() + dirs[idx].second };
+                Grass* baby = new Grass(childPos);
+                newborns.push_back(baby);
+            }
+        }
+        else if (sp == "D") {
+            Dandelion* d = static_cast<Dandelion*>(org);
+            if (d->tryReproduce()) {
+                int idx = rand() % static_cast<int>(dirs.size());
+                Position childPos{ pos.getX() + dirs[idx].first, pos.getY() + dirs[idx].second };
+                Dandelion* seed = new Dandelion(childPos);
+                newborns.push_back(seed);
+            }
+        }
+        else if (sp == "T") {
+            Toadstool* t = static_cast<Toadstool*>(org);
+            if (t->tryReproduce()) {
+                int idx = rand() % static_cast<int>(dirs.size());
+                Position childPos{ pos.getX() + dirs[idx].first, pos.getY() + dirs[idx].second };
+                Toadstool* baby = new Toadstool(childPos);
+                newborns.push_back(baby);
+            }
+        }
+    }
+
+		// Add newborns to the world
+    for (Organism* baby : newborns) {
+        organisms.push_back(baby);
+    }
+
 	turn++;
 }
 
@@ -118,6 +257,8 @@ void World::writeWorld(string fileName)
 			data = this->organisms[i]->getPosition().getX();
 			my_file.write((char*)&data, sizeof(int));
 			data = this->organisms[i]->getPosition().getY();
+			my_file.write((char*)&data, sizeof(int));
+			data = this->organisms[i]->getLifeSpan();
 			my_file.write((char*)&data, sizeof(int));
 			string s_data = this->organisms[i]->getSpecies();
 			int s_size = s_data.size();
@@ -155,6 +296,10 @@ void World::readWorld(string fileName)
 			my_file.read((char*)&result, sizeof(int));
 			pos_y = (int)result;
 			Position pos{ pos_x, pos_y };
+
+			int lifeSpan;
+			my_file.read((char*)&result, sizeof(int));
+			lifeSpan = (int)result;
 			
 			int s_size;
 			my_file.read((char*)&result, sizeof(int));
@@ -162,16 +307,45 @@ void World::readWorld(string fileName)
 
 			string species;
 			species.resize(s_size);
-			my_file.read((char*)&species[0], s_size);
+			my_file.read(&species[0], s_size);
 
 			Organism* org = nullptr;
+
 			if (species == "S") {
 				org = new Sheep(pos);
 				org->setPower(power);
+				org->setLifeSpan(lifeSpan);
 			}
+			else if (species == "W")
+			{
+				org = new Wolf(pos);
+				org->setPower(power);
+				org->setLifeSpan(lifeSpan);
+			}else if (species == "D")
+			{
+				org = new Dandelion(pos);
+				org->setPower(power);
+				org->setLifeSpan(lifeSpan);
+			}
+			else if (species == "G")
+			{
+				org = new Grass(pos);
+				org->setPower(power);
+				org->setLifeSpan(lifeSpan);
+			}
+			else if (species == "T")
+			{
+				org = new Toadstool(pos);
+				org->setPower(power);
+				org->setLifeSpan(lifeSpan);
+			}
+			else {
+				cerr << "Unknown species: " << species << endl;
+			}
+			
+			
 			if (org != nullptr) {
 				new_organisms.push_back(org);
-				delete org;
 			}
 		}
 		this->organisms = new_organisms;

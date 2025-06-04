@@ -33,7 +33,9 @@ public:
 	int getTurn();
 	
 	void addOrganism(Organism *organism);
+	void removeOrganism(Organism *organism);
 	vector<pair<int,int>> getVectorOfFreeDirections(Position position);
+	vector<pair<int,int>> getVectorOfPossibleDirections(Position position);
 	void makeTurn();
 
 	void writeWorld(string fileName);

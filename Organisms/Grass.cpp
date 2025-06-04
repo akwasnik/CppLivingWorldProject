@@ -1,6 +1,6 @@
 #include "Grass.h"
 
-Grass::Grass(Position position): Plant(0, position), powerToReproduce(1){
+Grass::Grass(Position position): Plant(0, position, 10), powerToReproduce(1){
     setSpecies("G");
 }
 

@@ -1,7 +1,6 @@
 #include "Wolf.h"
 
-Wolf::Wolf(Position position): Animal(8, position), powerToReproduce(16)
-{
+Wolf::Wolf(Position position): Animal(8, position, 20), powerToReproduce(16){
     setSpecies("W");
 }
 

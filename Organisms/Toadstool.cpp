@@ -1,6 +1,6 @@
 #include "Toadstool.h"
 
-Toadstool::Toadstool(Position position): Plant(0, position), powerToReproduce(4){
+Toadstool::Toadstool(Position position): Plant(0, position, 12), powerToReproduce(4){
     setSpecies("T");
 }
 

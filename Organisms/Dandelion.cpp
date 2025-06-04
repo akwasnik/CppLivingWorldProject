@@ -1,6 +1,6 @@
 #include "Dandelion.h"
 
-Dandelion::Dandelion(Position position): Plant(0, position), powerToReproduce(2){
+Dandelion::Dandelion(Position position): Plant(0, position, 6), powerToReproduce(2){
     setSpecies("D"); 
 }
 
